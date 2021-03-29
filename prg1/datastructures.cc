@@ -132,7 +132,7 @@ std::vector<Coord> Datastructures::get_area_coords(AreaID id)
     // Replace this comment with your implementation
     std::unordered_map<PlaceID,  std::pair<Name, std::vector<Coord>>>::const_iterator it = areaMap.find(id);
     if(it == areaMap.end()) {
-        return {NO_COORD};;
+        return {NO_COORD};
     }
     else {
         return it->second.second;
@@ -155,10 +155,12 @@ std::vector<PlaceID> Datastructures::places_alphabetically()
         std::pair<Name, PlaceID> pair = std::make_pair(std::get<0>(it->second), it->first);
         names.insert(pair);
     }
-    for(auto it=names.begin();it!=names.end();it++) {
-       vector_names.push_back(it->second);
-    }
+    std::transform(names.begin(),
+                   names.end(),
+                   std::back_inserter(vector_names),
+                   [](const std::pair<Name, PlaceID>& p){return p.second;});
     return {vector_names};
+
 }
 
 std::vector<PlaceID> Datastructures::places_coord_order()
@@ -172,9 +174,10 @@ std::vector<PlaceID> Datastructures::places_coord_order()
         std::tuple<int, int, PlaceID> tuple {x, coord.y, it->first};
         coords.insert(tuple);
     }
-    for(auto it=coords.begin();it!=coords.end();it++) {
-        vector_ids.push_back(std::get<2>(*it));
-    }
+    std::transform(coords.begin(),
+                   coords.end(),
+                   std::back_inserter(vector_ids),
+                   [](const std::tuple<int, int, PlaceID>& p){return std::get<2>(p);});
     return {vector_ids};
 }
 
@@ -245,31 +248,44 @@ bool Datastructures::add_subarea_to_area(AreaID id, AreaID parentid)
         return false;
     }
     else  {
-        std::unordered_map<AreaID, std::unordered_set<AreaID>>::const_iterator subit = subArea.find(parentid);
-        std::unordered_map<AreaID, std::unordered_set<AreaID>>::const_iterator subit2 = subArea.find(id);
+        std::unordered_map<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>>::const_iterator subit = subArea.find(parentid);
+        std::unordered_map<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>>::const_iterator subit2 = subArea.find(id);
+
+        // parent area does not exist in subareas
         if(subit == subArea.end()) {
             std::unordered_set<AreaID> set;
             set.insert(id);
-            std::pair<AreaID, std::unordered_set<AreaID>> pair = std::make_pair(parentid, set);
+            std::pair<AreaID, std::unordered_set<AreaID>> data_pair = std::make_pair(NO_AREA, set);
+            std::pair<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>> pair = std::make_pair(parentid, data_pair);
             subArea.insert(pair);
-
+            // subarea does not exist in subareas
             if(subit2 == subArea.end()) {
                 std::unordered_set<AreaID> set;
-                std::pair<AreaID, std::unordered_set<AreaID>> pair = std::make_pair(id, set);
+                std::pair<AreaID, std::unordered_set<AreaID>> data_pair = std::make_pair(parentid, set);
+                std::pair<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>> pair = std::make_pair(id, data_pair);
                 subArea.insert(pair);
+
+            }
+            else {
+                subArea[id].first = parentid;
             }
             return true;
+
         }
         else {
-            subArea[parentid].insert(id);
+            subArea[parentid].second.insert(id);
             if(subit2 == subArea.end()) {
                 std::unordered_set<AreaID> set;
-                std::pair<AreaID, std::unordered_set<AreaID>> pair = std::make_pair(id, set);
+                std::pair<AreaID, std::unordered_set<AreaID>> data_pair = std::make_pair(parentid, set);
+                std::pair<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>> pair = std::make_pair(id, data_pair);
                 subArea.insert(pair);
+
+            }
+            else {
+                subArea[id].first = parentid;
             }
             return true;
         }
-
     }
 }
 
@@ -277,22 +293,30 @@ std::vector<AreaID> Datastructures::subarea_in_areas(AreaID id)
 {
 
     std::vector<PlaceID> id_list;
+    //temp id list for combining vectors
     std::vector<PlaceID> id_list2;
-    std::unordered_map<AreaID, std::pair<Name, std::vector<Coord>>>::const_iterator it = areaMap.find(id);
-    if(it == areaMap.end()) {
-        return {NO_AREA};
+    std::vector<PlaceID> id_list3;
+    std::unordered_map<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>>::const_iterator it = subArea.find(id);
+    std::unordered_map<AreaID, std::pair<Name, std::vector<Coord>>>::const_iterator iter = areaMap.find(id);
+
+    if(iter == areaMap.end()) {
+        return {NO_AREA};;
     }
-    for(auto it = subArea.begin(); it != subArea.end(); it++) {
-        std::unordered_set<AreaID>::const_iterator id_iter = it->second.find(id);
-        if(id_iter != it->second.end()) {
-            id_list.push_back(it->first);
+
+    if(it != subArea.end()) {
+        if(it->second.first == NO_AREA) {
+            return id_list = {};
         }
-    }
-    for (unsigned int i = 0; i < id_list.size() ; i++) {
-        id_list2 = subarea_in_areas(id_list.at(i));
+        id_list2.push_back(it->second.first);
+        id_list3 = subarea_in_areas(it->second.first);
+        id_list2.insert(id_list2.end(), id_list3.begin(), id_list3.end());
         id_list.insert(id_list.end(), id_list2.begin(), id_list2.end());
+        return id_list;
     }
-    return id_list;
+    else{
+        return id_list;
+    }
+
 
 }
 
@@ -349,35 +373,36 @@ std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID id)
         return {NO_AREA};
     }
 
-    std::unordered_map<AreaID, std::unordered_set<AreaID>>::const_iterator iter = subArea.find(id);
-    id_list.insert(id_list.end(), iter->second.begin(), iter->second.end());
+    std::unordered_map<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>>::const_iterator iter = subArea.find(id);
+    if (iter == subArea.end()) {
+        return {};
+
+    }
+    id_list.insert(id_list.end(), iter->second.second.begin(), iter->second.second.end());
     for (unsigned int i = 0; i < id_list.size() ; i++) {
         id_list2 = all_subareas_in_area(id_list.at(i));
         id_list.insert(id_list.end(), id_list2.begin(), id_list2.end());
        }
-
     return id_list;
-
 }
 
 AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
 {
     std::vector<AreaID> areas1;
     std::vector<AreaID> areas2;
+    std::unordered_set<AreaID> ht;
     std::vector<AreaID> v3;
     //for intersect function
-    std::sort(areas1.begin(), areas1.end());
-    std::sort(areas2.begin(), areas2.end());
     areas1 = subarea_in_areas(id1);
     areas2 = subarea_in_areas(id2);
-    std::set_intersection(areas1.begin(),areas1.end(),
-                          areas2.begin(),areas2.end(),
-                          back_inserter(v3));
+    ht.insert(areas1.begin(), areas1.end());
 
-    if (v3.size() == 0) {
-        return NO_AREA;
+    for(auto element : areas2) {
+        ht.find(element);
+        if(ht.find(element) != ht.end()) {
+            return element;
+        }
     }
-    else {
-        return v3.at(0);
-    }
+    return NO_AREA;
+
 }
