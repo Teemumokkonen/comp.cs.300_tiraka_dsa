@@ -388,6 +388,7 @@ std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID id)
 
 AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
 {
+
     std::vector<AreaID> areas1;
     std::vector<AreaID> areas2;
     std::unordered_set<AreaID> ht;
@@ -404,5 +405,6 @@ AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
         }
     }
     return NO_AREA;
+
 
 }
