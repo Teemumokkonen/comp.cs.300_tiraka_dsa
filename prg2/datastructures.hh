@@ -242,7 +242,6 @@ private:
     std::unordered_map<AreaID, std::pair<Name, std::vector<Coord>>> areaMap;
     std::unordered_map<PlaceID, std::tuple<Name, Coord, PlaceType>> placeMap;
     std::unordered_map<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>> subArea;
-    std::unordered_map<WayID, std::vector<Coord>> wayMap;
 
 };
 

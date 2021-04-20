@@ -398,25 +398,14 @@ AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
 
 std::vector<WayID> Datastructures::all_ways()
 {
-    std::vector<WayID> ids;
-    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.begin();
-    while (it != wayMap.end()) {
-        ids.push_back(it->first);
-    }
+    // Replace this comment with your implementation
     return {};
 }
 
 bool Datastructures::add_way(WayID id, std::vector<Coord> coords)
 {   
-    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.find(id);
-    if(it == wayMap.end()) {
-        std::pair<WayID, std::vector<Coord>> pair = make_pair(id, coords);
-        wayMap.insert(make_pair(id, coords));
-        return true;
-    }
-    else  {
-        return false;
-    }
+    // Replace this comment with your implementation
+    return false;
 }
 
 std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
@@ -427,19 +416,13 @@ std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
 
 std::vector<Coord> Datastructures::get_way_coords(WayID id)
 {
-    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.find(id);
-    if (it == wayMap.end()) {
-        return {NO_COORD};
-    }
-    else {
-        return it->second;
-    }
+    // Replace this comment with your implementation
+    return {NO_COORD};
 }
 
 void Datastructures::clear_ways()
 {
     // Replace this comment with your implementation
-    wayMap.clear();
 }
 
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_any(Coord fromxy, Coord toxy)
