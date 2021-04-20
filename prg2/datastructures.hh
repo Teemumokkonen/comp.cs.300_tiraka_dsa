@@ -9,6 +9,13 @@
 #include <utility>
 #include <limits>
 #include <functional>
+#include <tuple>
+#include <unordered_map>
+#include <set>
+#include <unordered_set>
+#include <math.h>
+#include <QDebug>
+#include <algorithm>
 
 // Types for IDs
 using PlaceID = long long int;
@@ -232,6 +239,9 @@ public:
 
 private:
     // Add stuff needed for your class implementation here
+    std::unordered_map<AreaID, std::pair<Name, std::vector<Coord>>> areaMap;
+    std::unordered_map<PlaceID, std::tuple<Name, Coord, PlaceType>> placeMap;
+    std::unordered_map<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>> subArea;
 
 };
 
