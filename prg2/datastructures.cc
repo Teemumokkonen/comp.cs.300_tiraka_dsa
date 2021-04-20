@@ -26,12 +26,12 @@ Type random_in_range(Type start, Type end)
 
 Datastructures::Datastructures()
 {
-
+    // Replace this comment with your implementation
 }
 
 Datastructures::~Datastructures()
 {
-
+    // Replace this comment with your implementation
 }
 
 int Datastructures::place_count()
@@ -45,7 +45,6 @@ void Datastructures::clear_all()
     areaMap.clear();
     placeMap.clear();
     subArea.clear();
-
 }
 
 std::vector<PlaceID> Datastructures::all_places()
@@ -59,7 +58,6 @@ std::vector<PlaceID> Datastructures::all_places()
 
 bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coord xy)
 {
-
     std::unordered_map<PlaceID, std::tuple<Name, Coord, PlaceType>>::const_iterator it = placeMap.find(id);
     if(it == placeMap.end()) {
         std::tuple<Name, Coord, PlaceType> values {name, xy, type};
@@ -69,12 +67,10 @@ bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coo
     else  {
         return false;
     }
-
 }
 
 std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID id)
 {
-
     std::unordered_map<PlaceID, std::tuple<Name, Coord, PlaceType>>::const_iterator it = placeMap.find(id);
     if(it == placeMap.end()) {
         return {NO_NAME, PlaceType::NO_TYPE};
@@ -89,7 +85,6 @@ std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID id)
 
 Coord Datastructures::get_place_coord(PlaceID id)
 {
-
     std::unordered_map<PlaceID, std::tuple<Name, Coord, PlaceType>>::const_iterator it = placeMap.find(id);
     if(it == placeMap.end()) {
         return NO_COORD;
@@ -98,12 +93,10 @@ Coord Datastructures::get_place_coord(PlaceID id)
         Coord coords = std::get<1>(it->second);
         return coords;
     }
-
 }
 
 bool Datastructures::add_area(AreaID id, const Name &name, std::vector<Coord> coords)
 {
-
     std::unordered_map<AreaID,  std::pair<Name, std::vector<Coord>>>::const_iterator it = areaMap.find(id);
     if(it == areaMap.end()) {
         std::pair<Name, std::vector<Coord>> values = make_pair(name, coords);
@@ -114,7 +107,6 @@ bool Datastructures::add_area(AreaID id, const Name &name, std::vector<Coord> co
         return false;
     }
 }
-
 
 Name Datastructures::get_area_name(AreaID id)
 {
@@ -160,7 +152,6 @@ std::vector<PlaceID> Datastructures::places_alphabetically()
                    std::back_inserter(vector_names),
                    [](const std::pair<Name, PlaceID>& p){return p.second;});
     return {vector_names};
-
 }
 
 std::vector<PlaceID> Datastructures::places_coord_order()
@@ -316,8 +307,6 @@ std::vector<AreaID> Datastructures::subarea_in_areas(AreaID id)
     else{
         return id_list;
     }
-
-
 }
 
 std::vector<PlaceID> Datastructures::places_closest_to(Coord xy, PlaceType type)
@@ -361,7 +350,6 @@ bool Datastructures::remove_place(PlaceID id)
     }
     placeMap.erase(it);
     return true;
-
 }
 
 std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID id)
@@ -390,8 +378,7 @@ AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
 {
 
     std::vector<AreaID> areas1;
-    std::vector<AreaID> areas2;    
-
+    std::vector<AreaID> areas2;
     std::unordered_set<AreaID> ht;
     std::vector<AreaID> v3;
     //for intersect function
@@ -407,4 +394,86 @@ AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
     }
     return NO_AREA;
 
+}
+
+std::vector<WayID> Datastructures::all_ways()
+{
+    std::vector<WayID> ids;
+    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.begin();
+    while (it != wayMap.end()) {
+        ids.push_back(it->first);
+    }
+    return {};
+}
+
+bool Datastructures::add_way(WayID id, std::vector<Coord> coords)
+{   
+    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.find(id);
+    if(it == wayMap.end()) {
+        std::pair<WayID, std::vector<Coord>> pair = make_pair(id, coords);
+        wayMap.insert(make_pair(id, coords));
+        return true;
+    }
+    else  {
+        return false;
+    }
+}
+
+std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
+{
+    // Replace this comment with your implementation
+    return {{NO_WAY, NO_COORD}};
+}
+
+std::vector<Coord> Datastructures::get_way_coords(WayID id)
+{
+    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.find(id);
+    if (it == wayMap.end()) {
+        return {NO_COORD};
+    }
+    else {
+        return it->second;
+    }
+}
+
+void Datastructures::clear_ways()
+{
+    // Replace this comment with your implementation
+    wayMap.clear();
+}
+
+std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_any(Coord fromxy, Coord toxy)
+{
+    // Replace this comment with your implementation
+    return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+}
+
+bool Datastructures::remove_way(WayID id)
+{
+    // Replace this comment with your implementation
+    return false;
+}
+
+std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_least_crossroads(Coord fromxy, Coord toxy)
+{
+    // Replace this comment with your implementation
+    return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+}
+
+std::vector<std::tuple<Coord, WayID> > Datastructures::route_with_cycle(Coord fromxy)
+{
+    // Replace this comment with your implementation
+    return {{NO_COORD, NO_WAY}};
+}
+
+std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_shortest_distance(Coord fromxy, Coord toxy)
+{
+    // Replace this comment with your implementation
+    return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+}
+
+Distance Datastructures::trim_ways()
+{
+    // Replace this comment with your implementation
+    return NO_DISTANCE;
 }
