@@ -45,6 +45,7 @@ void Datastructures::clear_all()
     areaMap.clear();
     placeMap.clear();
     subArea.clear();
+    wayMap.clear();
 }
 
 std::vector<PlaceID> Datastructures::all_places()
@@ -399,48 +400,271 @@ AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
 std::vector<WayID> Datastructures::all_ways()
 {
     // Replace this comment with your implementation
-    return {};
+    std::vector<WayID> ids;
+    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.begin();
+    while (it != wayMap.end()) {
+        ids.push_back(it->first);
+        it++;
+    }
+    return ids;
 }
 
 bool Datastructures::add_way(WayID id, std::vector<Coord> coords)
 {   
-    // Replace this comment with your implementation
-    return false;
+    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.find(id);
+    if(it == wayMap.end()) {
+        std::pair<WayID, std::vector<Coord>> pair = make_pair(id, coords);
+        wayMap.insert(pair);
+        return true;
+    }
+    else  {
+        return false;
+    }
 }
 
 std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
 {
     // Replace this comment with your implementation
-    return {{NO_WAY, NO_COORD}};
+    // reitit alkaa tai loppuu aina vectorin ekassa tai viimeisessä pisteessä.
+    // Tallennetaan id, coords...
+
+    // Kun löytyy koordinaatti -> tallennetaan reitti -> katsotaan toisen päädyn id ja tallennetaan siihen sopivat reitit
+    // -> ja tämä jatkuu
+
+    tempWays.clear();
+    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.begin();
+
+    while (it != wayMap.end()) {
+        if(it->second.at(0) == xy) {
+            tempWays.push_back(make_pair(it->first, it->second.at(it->second.size() - 1)));
+
+        }
+        else if(it->second.at(it->second.size() - 1) == xy) {
+            tempWays.push_back(make_pair(it->first, it->second.at(0)));
+        }
+        it++;
+
+
+    }
+    if(tempWays.empty() == true) {
+        return {};
+    }
+    return tempWays;
 }
 
 std::vector<Coord> Datastructures::get_way_coords(WayID id)
 {
     // Replace this comment with your implementation
-    return {NO_COORD};
+    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.find(id);
+    if(it == wayMap.end()) {
+        return {NO_COORD};
+    }
+    else {
+        return it->second;
+    }
 }
 
 void Datastructures::clear_ways()
 {
-    // Replace this comment with your implementation
+    wayMap.clear();
 }
 
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_any(Coord fromxy, Coord toxy)
 {
-    // Replace this comment with your implementation
-    return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+
+
+    auto start = ways_from(fromxy);
+    auto end = ways_from(toxy);
+    if(start.size() == 0 or end.size() == 0) {
+        return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+    }
+
+    std::vector<WayID> checked;
+    std::vector<std::tuple<Coord, WayID, Distance>> final_route;
+    // add first node to prior_set.
+    // using set here because I didn't know how to make prior_q min.
+    std::set<std::pair<Distance, std::pair<Coord, WayID>>> prior_set;
+    prior_set.insert(std::make_pair(0,  std::make_pair(fromxy, NO_WAY)));
+
+
+    std::unordered_map<WayID, std::tuple<Coord, Distance, WayID>> distance_ways;
+
+    // route map with dist and prev location taken
+
+    // known nodes.
+    auto it = wayMap.begin();
+    while(it != wayMap.end()) {
+        std::tuple<Coord, Distance, WayID> tuple = std::tuple(NO_COORD, 100000, NO_WAY);
+        distance_ways.insert(std::make_pair(it->first, tuple));
+        it++;
+    }
+
+    std::tuple<Coord, Distance, WayID> tuple = std::tuple(fromxy, 0, NO_WAY);
+    distance_ways.insert(std::make_pair(NO_WAY, tuple));
+
+    while (prior_set.size() != 0) {
+        // find prior node
+        auto current = prior_set.begin();
+        // find prior nodes relatives.
+        auto neighbours = ways_from(std::get<0> (current->second));
+        // go through them
+        for(const auto &element : neighbours) {
+            // check if relative has been checked already
+            auto it = std::find(checked.begin(), checked.end(), element.first);
+            // if not found.
+            if(it == checked.end()) {
+
+                auto route_coords = get_way_coords(element.first);
+                int total_dist = 0;
+                for(unsigned long int i = 0; i  < route_coords.size(); i++) {
+                    if(i != route_coords.size() - 1) {
+                        int x = std::floor(pow(route_coords.at(i).x - route_coords.at(i + 1).x, 2));
+                        int y = std::floor(pow(route_coords.at(i).y - route_coords.at(i + 1).y, 2));
+                        int dist = sqrt(x + y);
+                        total_dist = total_dist + dist;
+                    }
+                }
+
+                // get relatives iterator.
+                auto iter = distance_ways.find(element.first);
+                // push relative to prior list with weight from start node + dist.
+                prior_set.insert(std::make_pair(total_dist + current->first, std::make_pair(element.second, element.first)));
+                // if dist from start + new dist < known dist from neighbour
+                if(current->first + total_dist < std::get<1> (iter->second)) {
+                    std::get<0>(iter->second) = element.second;
+                    std::get<1>(iter->second) = total_dist + current->first;
+                    std::get<2>(iter->second) = current->second.second;
+                }
+                Coord route_end = {element.second.x, element.second.y};
+                if (toxy == route_end) {
+
+                    final_route.push_back(std::tuple(toxy, NO_WAY, total_dist + current->first));
+                    auto prev = distance_ways.find(std::get<2>(iter->second));
+                    auto taken_way = iter->first;
+                    while(prev->first != NO_WAY) {
+                        final_route.push_back(std::tuple(std::get<0>(prev->second), taken_way, std::get<1>(prev->second)));
+                        taken_way = prev->first;
+                        prev = distance_ways.find(std::get<2>(prev->second));
+                    }
+
+                    final_route.push_back(std::tuple(fromxy, taken_way, 0));
+                    std::reverse(final_route.begin(), final_route.end());
+                    return final_route;
+                }
+            }
+        }
+        checked.push_back(current->second.second);
+        prior_set.erase(current);
+    }
+
+    return {};
 }
 
 bool Datastructures::remove_way(WayID id)
 {
     // Replace this comment with your implementation
-    return false;
+    // Replace this comment with your implementation
+    std::unordered_map<WayID, std::vector<Coord>>::const_iterator it = wayMap.find(id);
+    if(it == wayMap.end()) {
+        return false;
+    }
+    else {
+        wayMap.erase(it->first);
+        return true;
+    }
 }
 
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_least_crossroads(Coord fromxy, Coord toxy)
 {
-    // Replace this comment with your implementation
-    return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+
+
+    auto start = ways_from(fromxy);
+    auto end = ways_from(toxy);
+    if(start.size() == 0 or end.size() == 0) {
+        return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+    }
+
+    std::vector<WayID> checked;
+    std::vector<std::tuple<Coord, WayID, Distance>> final_route;
+    // add first node to prior_set.
+    // using set here because I didn't know how to make prior_q min.
+    std::set<std::pair<Distance, std::tuple<Coord, WayID, Distance>>> prior_set;
+    prior_set.insert(std::make_pair(0,  std::tuple(fromxy, NO_WAY, 0)));
+
+
+    std::unordered_map<WayID, std::tuple<Coord, std::pair<Distance, Distance>, WayID>> distance_ways;
+
+    // route map with dist and prev location taken
+
+    // known nodes.
+    auto it = wayMap.begin();
+    while(it != wayMap.end()) {
+        std::tuple<Coord, std::pair<Distance, Distance>, WayID> tuple = std::tuple(NO_COORD, std::make_pair(10000, 0), NO_WAY);
+        distance_ways.insert(std::make_pair(it->first, tuple));
+        it++;
+    }
+
+    std::tuple<Coord, std::pair<Distance, Distance>, WayID> tuple = std::tuple(fromxy, std::make_pair(0,0), NO_WAY);
+    distance_ways.insert(std::make_pair(NO_WAY, tuple));
+
+    while (prior_set.size() != 0) {
+        // find prior node
+        auto current = prior_set.begin();
+        // find prior nodes relatives.
+        auto neighbours = ways_from(std::get<0> (current->second));
+        // go through them
+        for(const auto &element : neighbours) {
+            // check if relative has been checked already
+            auto it = std::find(checked.begin(), checked.end(), element.first);
+            // if not found.
+            if(it == checked.end()) {
+
+                auto route_coords = get_way_coords(element.first);
+                int total_dist = 0;
+                for(unsigned long int i = 0; i  < route_coords.size(); i++) {
+                    if(i != route_coords.size() - 1) {
+                        int x = std::floor(pow(route_coords.at(i).x - route_coords.at(i + 1).x, 2));
+                        int y = std::floor(pow(route_coords.at(i).y - route_coords.at(i + 1).y, 2));
+                        int dist = sqrt(x + y);
+                        total_dist = total_dist + dist;
+                    }
+                }
+
+                // get relatives iterator.
+                auto iter = distance_ways.find(element.first);
+                // push relative to prior list with weight from start node + dist.
+                prior_set.insert(std::make_pair(current->first + 1, std::tuple(element.second, element.first, total_dist + std::get<2> (current->second))));
+                // if dist from start + new dist < known dist from neighbour
+                if(current->first + 1 < std::get<1>(iter->second).first) {
+                std::get<0>(iter->second) = element.second;
+                std::get<1>(iter->second).first = current->first + 1;
+                std::get<1>(iter->second).second = total_dist + std::get<2> (current->second);
+                std::get<2>(iter->second) = std::get<1>(current->second);
+                }
+
+                Coord route_end = {element.second.x, element.second.y};
+                if (toxy == route_end) {
+
+                    final_route.push_back(std::tuple(toxy, NO_WAY, total_dist + std::get<2>(current->second)));
+                    auto prev = distance_ways.find(std::get<2>(iter->second));
+                    auto taken_way = iter->first;
+                    while(prev->first != NO_WAY) {
+                        final_route.push_back(std::tuple(std::get<0>(prev->second), taken_way, std::get<1>(prev->second).second));
+                        taken_way = prev->first;
+                        prev = distance_ways.find(std::get<2>(prev->second));
+                    }
+
+                    final_route.push_back(std::tuple(fromxy, taken_way, 0));
+                    std::reverse(final_route.begin(), final_route.end());
+                    return final_route;
+                }
+            }
+        }
+        checked.push_back(std::get<1>(current->second));
+        prior_set.erase(current);
+    }
+
+    return {};
 }
 
 std::vector<std::tuple<Coord, WayID> > Datastructures::route_with_cycle(Coord fromxy)
@@ -451,8 +675,8 @@ std::vector<std::tuple<Coord, WayID> > Datastructures::route_with_cycle(Coord fr
 
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_shortest_distance(Coord fromxy, Coord toxy)
 {
-    // Replace this comment with your implementation
-    return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+    // calling any route since it is written in a way that it always finds sortest route either way.
+    return route_any(fromxy, toxy);
 }
 
 Distance Datastructures::trim_ways()

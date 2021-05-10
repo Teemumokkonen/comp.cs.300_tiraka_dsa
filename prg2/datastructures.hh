@@ -16,6 +16,7 @@
 #include <math.h>
 #include <QDebug>
 #include <algorithm>
+#include <queue>
 
 // Types for IDs
 using PlaceID = long long int;
@@ -191,50 +192,57 @@ public:
 
     // Phase 2 operations
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n);
+    // Short rationale for estimate: Iterating over unoredered_map
+    // and adding to vector so O(n).
     std::vector<WayID> all_ways();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: O(n) is worst case for adding to hashmap
+    // but on it is O(1).
     bool add_way(WayID id, std::vector<Coord> coords);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Iterate over unordered map of ways so worst case O(n).
     std::vector<std::pair<WayID, Coord>> ways_from(Coord xy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: worst case for finding from unordered map is
+    // O(n), but on average it is O(1).
     std::vector<Coord> get_way_coords(WayID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: clear command for hashmap is worst case O(n)
     void clear_ways();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n^3)
+    // Short rationale for estimate: This function contains three for while loops nested
+    // I implemented here the dijkstras algorithm here so that two function could be
+    // done with this funtion only.
     std::vector<std::tuple<Coord, WayID, Distance>> route_any(Coord fromxy, Coord toxy);
 
     // Non-compulsory operations
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Finding from
     bool remove_way(WayID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n^3)
+    // Short rationale for estimate: this function is essentially dijkstras algorithm, but the weight is
+    // the amount of crossroads.
     std::vector<std::tuple<Coord, WayID, Distance>> route_least_crossroads(Coord fromxy, Coord toxy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: -
+    // Short rationale for estimate: -
     std::vector<std::tuple<Coord, WayID>> route_with_cycle(Coord fromxy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n^3)
+    // Short rationale for estimate: This funtion uses any_route as it's
+    // findind method.
     std::vector<std::tuple<Coord, WayID, Distance>> route_shortest_distance(Coord fromxy, Coord toxy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: -
+    // Short rationale for estimate: -
     Distance trim_ways();
 
 private:
@@ -242,6 +250,10 @@ private:
     std::unordered_map<AreaID, std::pair<Name, std::vector<Coord>>> areaMap;
     std::unordered_map<PlaceID, std::tuple<Name, Coord, PlaceType>> placeMap;
     std::unordered_map<AreaID, std::pair<AreaID, std::unordered_set<AreaID>>> subArea;
+    std::unordered_map<WayID, std::vector<Coord>> wayMap;
+
+    // Temp datastructures:
+    std::vector<std::pair<WayID, Coord>> tempWays;
 
 };
 
